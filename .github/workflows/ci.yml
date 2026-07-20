@@ -1,0 +1,74 @@
+name: ci
+
+# Trunk-based CI: runs on PRs to main and on push:main (the squash commit that
+# lands on main is a new SHA, so it gets its own gate run). Does NOT deploy.
+#
+# This file is built across batches: the `audit` job (SCA hard gate) lands in
+# batch C; `quality-gate` / `build` / `test-coverage` land in batch D. Together
+# with `gitleaks` (secret-scan.yml) they produce the five required status
+# checks named in docs/50-deployment/rebuild/main-ruleset.json. Job names are a
+# stable contract - renaming one breaks branch protection.
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('push-{0}', github.ref_name) }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # -- Audit (SCA hard gate) --------------------------------------------------
+  # Real SCA: osv-scanner scans pnpm-lock.yaml's full dependency tree against
+  # the OSV vulnerability database and hard-blocks on any new finding. Runs the
+  # pinned, sha256-verified binary directly (no third-party action: no license
+  # or supply-chain concern), mirroring the gitleaks pattern in secret-scan.yml.
+  # The baseline is empty (.osv-scanner.toml); new advisories must be fixed, not
+  # suppressed. `audit` is a required check on main.
+  audit:
+    name: audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Single point of upgrade (see https://github.com/google/osv-scanner/releases).
+      # Bump both the version and the sha256 below together.
+      OSV_SCANNER_VERSION: "2.4.0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache osv-scanner binary
+        id: osv-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/osv-bin
+          key: osv-scanner-${{ env.OSV_SCANNER_VERSION }}-linux-amd64
+
+      - name: Download osv-scanner (cache miss only)
+        if: ${{ steps.osv-cache.outputs.cache-hit != 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256=15314940c10d26af9c6649f150b8a47c1262e8fc7e17b1d1029b0e479e8ed8a0
+          url="https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64"
+          mkdir -p /tmp/osv-bin
+          curl -fsSL "$url" -o /tmp/osv-bin/osv-scanner
+          echo "${sha256}  /tmp/osv-bin/osv-scanner" | sha256sum -c -
+
+      - name: OSV dependency scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x /tmp/osv-bin/osv-scanner
+          # Must pass --config explicitly: when scanning a --lockfile,
+          # osv-scanner does not auto-discover the repo-root config, so the
+          # ignore baseline would silently not apply. A new advisory exits
+          # non-zero and fails this required check.
+          /tmp/osv-bin/osv-scanner scan -L pnpm-lock.yaml --config .osv-scanner.toml
