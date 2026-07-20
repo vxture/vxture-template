@@ -104,7 +104,8 @@ jobs:
     needs: [static-checks]
     steps:
       - name: Aggregate
-        run: echo "quality gate: all aggregated checks passed"
+        run: |
+          echo "quality gate: all aggregated checks passed"
 
   # -- Build (required check; placeholder in the skeleton) --------------------
   build:
@@ -112,7 +113,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Skeleton build
-        run: echo "skeleton: no app yet"
+        run: |
+          echo "skeleton: no app yet"
 
   # -- Test coverage (required check; permanently-green no-op in the skeleton) -
   test-coverage:
@@ -120,4 +122,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Skeleton test-coverage
-        run: echo "skeleton: no tests yet"
+        run: |
+          echo "skeleton: no tests yet"
