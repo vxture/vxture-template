@@ -19,13 +19,29 @@ Batch 1 done = runbook batches A-D machine-checks all green + ruleset applied.
 `test-coverage` / `audit` / `gitleaks`) green on `main`, ruleset active, repo
 public with secret scanning + push protection enabled.
 
+## Batch 2 (platform integration + DB baseline) - COMPLETE
+
+Offline Mock-green. Each sub-batch was one PR (squash-merged).
+
+| Sub-batch | Scope | State |
+|-----------|-------|-------|
+| 2a | App-profile scaffold (Next.js standalone, `@product-code/*` workspace, Dockerfile, compose, real CI build) | done (#2) |
+| 2b | C1 OIDC RP - five `/auth/*` endpoints, RS256-only, `__Host-` cookie, Redis session, roles gate (guards arda #27/#28) | done (#3) |
+| 2c | C2 entitlement - envelope v3, gating/CTA, resolver + Mock + 45s cache, quota, capability mechanism, deep-link | done (#4) |
+| 2d | C3 - provisioning webhook (HMAC/idempotency/seq) + usage buffer/flush (409-terminal); persistence port + in-memory | done (#5) |
+| 2e | Business-face DB baseline - DDL three-part (vx_provision/local_authz/local_usage) + service role + column locks + Prisma lockstep guardrail | done (#6) |
+| 2f | Offline verification pages - tier x status gating matrix + channel-status probe | done (#7) |
+| 2g | `.env.example` completed with the platform-integration keys; batch-2 finalize | in progress |
+
+Deferred to later batches: the Prisma-backed runtime stores (need a live DB ->
+batch 3), the `@vxture/shared` value-domain dependency (needs CI `NODE_AUTH_TOKEN`
+-> TD-001), S2S / tool-protocol / agent-server (agent profile, pre-decisions
+pending), and the deploy pipeline (batch E).
+
 ## Later batches
 
 | Batch | Scope |
 |-------|-------|
-| 2 | Platform integration layer (OIDC RP, C2/C3 channels) + business-face DB baseline + offline Mock verification |
 | 3 | Online integration testing against real platform endpoints; agent-profile increment per its three pre-decisions |
 | 4 | First real product instantiation, full end-to-end |
-
-Not in batch 1: application source, the deploy pipeline (batch E), the
-business-face database (batch F), and the three-channel platform modules.
+| E | Deploy pipeline (tag->env CD, workflows, tailnet-ssh-connect) |
