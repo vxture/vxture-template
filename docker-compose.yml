@@ -1,0 +1,59 @@
+# Three-container stack for the app profile: <code>-app (Next.js) + <code>-redis
+# (RP session store) + <code>-db (business data). PROJECT_NAME drives the
+# compose project + container-name prefix so prod and beta never collide on one
+# host (prod=<code>-*, beta=<code>-beta-*). Backing services are internal-only;
+# only the app publishes a port. Structure/deploy details are exercised in the
+# deployment batch (batch E).
+name: ${PROJECT_NAME:-__PRODUCT_CODE__}
+
+services:
+  app:
+    container_name: ${PROJECT_NAME:-__PRODUCT_CODE__}-app
+    build:
+      context: .
+      dockerfile: portals/app/Dockerfile
+      args:
+        NEXT_PUBLIC_GIT_SHA: ${IMAGE_TAG:-local}
+    image: __PRODUCT_CODE__-app:${IMAGE_TAG:-local}
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      REDIS_URL: redis://${PROJECT_NAME:-__PRODUCT_CODE__}-redis:6379
+      DATABASE_URL: ${DATABASE_URL:-}
+    ports:
+      - "${APP_PUBLISH_PORT:-3000}:3000"
+    depends_on:
+      - redis
+      - db
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks: [appnet]
+    restart: unless-stopped
+
+  redis:
+    container_name: ${PROJECT_NAME:-__PRODUCT_CODE__}-redis
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ${DATA_DIR:-./data}/redis:/data
+    networks: [appnet]
+    restart: unless-stopped
+
+  db:
+    container_name: ${PROJECT_NAME:-__PRODUCT_CODE__}-db
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-vxturebiz___PRODUCT_CODE_SNAKE___prod}
+      POSTGRES_USER: ${POSTGRES_USER:-__PRODUCT_CODE_SNAKE___svc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+    volumes:
+      - ${DATA_DIR:-./data}/db:/var/lib/postgresql/data
+    networks: [appnet]
+    restart: unless-stopped
+
+networks:
+  appnet:
+    name: ${PROJECT_NAME:-__PRODUCT_CODE__}-net

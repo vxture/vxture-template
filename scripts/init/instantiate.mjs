@@ -9,12 +9,19 @@
  * downstream name (product_240_repo-template.md section 2.7), then writes a
  * .env.example skeleton. Pure Node, zero dependencies.
  *
- * Placeholders (three forms, so later-batch templated files stay correct even
- * when the code contains a hyphen):
- *   __PRODUCT_CODE__        raw code       - package scope, OIDC client, compose
- *                                            project/container prefix, image name
+ * Placeholders:
+ *   __PRODUCT_CODE__        raw code       - OIDC client, compose project/
+ *                                            container prefix, image name
  *   __PRODUCT_CODE_SNAKE__  hyphens->'_'   - Postgres database name and role
  *   __PRODUCT_CODE_UPPER__  SNAKE upper    - env-var / secret names
+ *   @product-code           npm scope      - workspace package scope. A separate
+ *                                            token because __PRODUCT_CODE__ is not
+ *                                            a valid npm name (uppercase + leading
+ *                                            underscore); the template ships the
+ *                                            valid placeholder scope `@product-code`
+ *                                            so it builds un-instantiated, and this
+ *                                            maps it to `@<code>`. `@`-anchored, so
+ *                                            it never touches prose.
  *
  * The script excludes itself, VCS/build dirs, and binary files from replacement.
  * With --dry-run it reports what it would change and prints the generated
@@ -82,6 +89,7 @@ const REPLACEMENTS = [
   ["__PRODUCT_CODE_UPPER__", upper],
   ["__PRODUCT_CODE_SNAKE__", snake],
   ["__PRODUCT_CODE__", code],
+  ["@product-code", `@${code}`],
 ];
 
 function walk(dir, out = []) {
