@@ -8,13 +8,16 @@ plan: platform repo `docs/30-design/product_240_repo-template.md` section 7.
 
 | Batch | Scope | Acceptance | State |
 |-------|-------|-----------|-------|
-| A | Root files + branch-protection ruleset (not yet applied) | first-push succeeds; `git diff --check` clean | done (local) |
-| B | Four-layer secret hygiene (gitleaks) | `gitleaks detect` full history 0 hits; CI `gitleaks` green | done (local) |
-| C | SCA hard gate (osv-scanner) | `osv-scanner scan -L pnpm-lock.yaml --config .osv-scanner.toml` -> No issues found; CI `audit` green | done (local; full scan needs the batch-D lockfile) |
-| D | Docs skeleton + CI aggregate + package.json + instantiate script + checklists | `check-docs-numbering.mjs --strict` exit 0; `pnpm type-check:all` passes; CI five jobs green | in progress |
-| A (finish) | Apply `main-ruleset.json` | `gh api repos/vxture/<repo>/rulesets` has a branch ruleset with the five required contexts | pending first push |
+| A | Root files + branch-protection ruleset | first-push succeeds; `git diff --check` clean | done |
+| B | Four-layer secret hygiene (gitleaks) | `gitleaks detect` full history 0 hits; CI `gitleaks` green | done |
+| C | SCA hard gate (osv-scanner) | `osv-scanner scan -L pnpm-lock.yaml --config .osv-scanner.toml` -> No issues found; CI `audit` green | done |
+| D | Docs skeleton + CI aggregate + package.json + instantiate script + checklists | `check-docs-numbering.mjs --strict` exit 0; `pnpm type-check:all` passes; CI five jobs green | done |
+| A (finish) | Apply `main-ruleset.json` | `gh api repos/vxture/<repo>/rulesets` has a branch ruleset with the five required contexts | done (ruleset id 19214235, active) |
 
 Batch 1 done = runbook batches A-D machine-checks all green + ruleset applied.
+**Batch 1 is COMPLETE**: all five required checks (`quality-gate` / `build` /
+`test-coverage` / `audit` / `gitleaks`) green on `main`, ruleset active, repo
+public with secret scanning + push protection enabled.
 
 ## Later batches
 
