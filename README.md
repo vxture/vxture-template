@@ -71,8 +71,8 @@ and writes a `.env.example` skeleton. It is pure Node with zero dependencies.
 Then follow the two checklists in `docs/50-deployment/`:
 
 1. Platform-side registration (owner / platform-line actions)
-2. GitHub bootstrap (create private repo, first-push main, run CI once, apply
-   the ruleset - in that order)
+2. GitHub bootstrap (create public repo, enable secret scanning + push
+   protection, first-push main, run CI once, apply the ruleset - in that order)
 
 ---
 

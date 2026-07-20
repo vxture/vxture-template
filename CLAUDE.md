@@ -129,14 +129,22 @@ not present in batch 1.
 ## Secret hygiene (four layers)
 
 Credentials never enter the repo - only environment/config injection. Leaks are
-revoked at the source console, not scrubbed from history.
+revoked at the source console, not scrubbed from history. Dev-phase repos are
+PUBLIC (no private fallback), so "credentials never committed" is an absolute
+rule, not a posture backed by a private boundary.
 
-1. GitHub secret scanning + push protection (repo setting) - blocks on push.
+1. GitHub secret scanning + push protection (repo setting) - blocks on push. On a
+   public repo these are free and fully enabled (a private repo would need GHAS),
+   so this layer is actually stronger here.
 2. `gitleaks` CI (`.github/workflows/secret-scan.yml`) - CI layer 2.
 3. Local `.husky/pre-commit` - wire once per clone with
    `git config core.hooksPath .husky` (and install gitleaks locally, e.g.
    `scoop install gitleaks`). Missing binary warns and passes, never blocks.
-4. Private repo.
+4. Public posture, all-rights-reserved. A public repo defaults to
+   all-rights-reserved; ship NO LICENSE file and NO `license` field / `@license`
+   marker - a stray open-source marker would actually grant rights (public != open
+   source). `package.json` keeps `"private": true` as an npm-publish guard, which
+   is unrelated to GitHub repo visibility.
 
 Shared credentials (ACR, tailscale, npm token) are org-level: configured once and
 shared to selected repos, not duplicated per repo.

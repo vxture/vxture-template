@@ -1,7 +1,7 @@
 #!/bin/sh
 # Local secret interception - earliest of the four org-mandated detection
-# layers (this hook -> CI gitleaks gate -> GitHub push protection -> private
-# repo posture). Scans staged content; a hit blocks the commit.
+# layers (this hook -> CI gitleaks gate -> GitHub push protection -> public
+# posture, no private fallback). Scans staged content; a hit blocks the commit.
 #
 # One-time wiring per clone (no husky npm package needed):
 #   git config core.hooksPath .husky

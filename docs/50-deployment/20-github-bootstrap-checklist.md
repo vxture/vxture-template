@@ -6,8 +6,12 @@ section 1 / section 6 and `product_240_repo-template.md` section 2.8.
 
 ## Batch 1 (governance shell) - do these now
 
-- [ ] Create the repo PRIVATE.
-- [ ] Enable GitHub secret scanning + push protection (repo Settings).
+- [ ] Create the repo PUBLIC (dev-phase repos are public; 140 section 2). A
+      public repo defaults to all-rights-reserved - ship no LICENSE file and no
+      `license` field (public != open source); clean any stray open-source marker.
+- [ ] Enable GitHub secret scanning + push protection (repo Settings) - free and
+      fully available on a public repo, and the primary defense now that there is
+      no private fallback.
 - [ ] ORDER MATTERS (empty repo): first-push `main` and let CI run once so the
       required checks are produced, THEN apply the ruleset. Applying a restrictive
       ruleset before the first import blocks that import.
