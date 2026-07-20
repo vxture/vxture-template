@@ -144,15 +144,30 @@ POSTGRES_USER=${snake}_svc
 POSTGRES_PASSWORD=                      # procure: ${upper}_DB_SVC_PASSWORD
 DATABASE_URL=postgresql://${snake}_svc:@${code}-db:5432/vxturebiz_${snake}_prod
 
-# --- Redis ---
+# --- Redis (RP session store) ---
 REDIS_URL=redis://${code}-redis:6379
 
-# --- Platform integration (added in batch 2; keys listed for forward reference) ---
-# OIDC_ISSUER / OIDC_CLIENT_ID (${code} | ${code}-beta) / OIDC_CLIENT_SECRET /
-# OIDC_REDIRECT_URI / OIDC_SCOPES / OIDC_POST_LOGOUT_REDIRECT_URI / RP_ENABLED
-# PLATFORM_API_URL / PLATFORM_INTERNAL_AUTH_TOKEN
-# PROVISION_WEBHOOK_SECRET (platform key: ${upper}_PROVISION_WEBHOOK_SECRET)
-# INTERNAL_JOB_TOKEN / DATA_ENCRYPTION_KEY
+# --- C1 OIDC RP (080-rp section 2.11) ---
+OIDC_ISSUER=https://accounts.vxture.com
+OIDC_CLIENT_ID=${code}                   # BETA OVERRIDES: ${code}-beta
+OIDC_CLIENT_SECRET=                      # procure: platform-issued client secret
+OIDC_REDIRECT_URI=https://${code}.vxture.com/auth/callback
+OIDC_SCOPES=openid profile email phone
+OIDC_POST_LOGOUT_REDIRECT_URI=https://${code}.vxture.com/
+OIDC_RP_ENABLED=on
+RP_SESSION_TTL=2592000
+RP_SESSION_COOKIE_NAME=__Host-vx_rp_session   # dev over http: vx_rp_session
+NEXT_PUBLIC_APP_URL=https://${code}.vxture.com
+
+# --- C2 entitlement / platform client ---
+PLATFORM_API_URL=                        # internal-network base; unset -> Mock resolver
+PLATFORM_INTERNAL_AUTH_TOKEN=            # procure: shared internal-auth secret (S2S)
+NEXT_PUBLIC_CONSOLE_URL=https://console.vxture.com
+
+# --- C3 provisioning webhook / usage ---
+PROVISION_WEBHOOK_SECRET=               # procure: ${upper}_PROVISION_WEBHOOK_SECRET (platform key)
+PROVISION_WEBHOOK_SECRET_NEXT=          # optional, rotation overlap
+INTERNAL_JOB_TOKEN=                     # procure: gates POST /api/usage/flush
 `;
 
 const ENV_PATH = ".env.example";
