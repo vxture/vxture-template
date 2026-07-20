@@ -1,6 +1,8 @@
 // Local usage buffer port (local_usage.raw). Only COUNTER metrics are buffered
-// here; gauge is a no-buffer direct PUT and caps are counted locally. Batch 2d
-// ships the in-memory store; the Prisma-backed store over local_usage lands in 2e.
+// here; gauge is a no-buffer direct PUT and caps are counted locally. In-memory
+// on the offline path; Prisma-backed over local_usage when DATABASE_URL is set.
+import { prismaEnabled } from "../../lib/db";
+import { PrismaUsageStore } from "./prisma-store";
 
 export interface UsageRow {
   workspaceId: string;
@@ -41,10 +43,16 @@ export class InMemoryUsageStore implements UsageStore {
   }
 }
 
-let store: UsageStore = new InMemoryUsageStore();
+let override: UsageStore | null = null;
+let memo: UsageStore | null = null;
+
 export function getUsageStore(): UsageStore {
-  return store;
+  if (override) return override;
+  if (memo) return memo;
+  memo = prismaEnabled() ? new PrismaUsageStore() : new InMemoryUsageStore();
+  return memo;
 }
-export function setUsageStore(next: UsageStore): void {
-  store = next;
+export function setUsageStore(next: UsageStore | null): void {
+  override = next;
+  memo = null;
 }

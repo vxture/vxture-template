@@ -70,7 +70,7 @@ export async function handleProvisioning(
       break;
   }
 
-  await deps.store.markDelivered(event.id);
+  await deps.store.markDelivered(event.id, { type: event.type, result: "processed" });
   await deps.store.setSeq(event.workspace_id, deps.product, event.seq);
   return { ok: true, handled: true, reason: "processed" };
 }
