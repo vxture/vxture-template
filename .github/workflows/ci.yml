@@ -3,11 +3,13 @@ name: ci
 # Trunk-based CI: runs on PRs to main and on push:main (the squash commit that
 # lands on main is a new SHA, so it gets its own gate run). Does NOT deploy.
 #
-# This file is built across batches: the `audit` job (SCA hard gate) lands in
-# batch C; `quality-gate` / `build` / `test-coverage` land in batch D. Together
-# with `gitleaks` (secret-scan.yml) they produce the five required status
-# checks named in docs/50-deployment/rebuild/main-ruleset.json. Job names are a
-# stable contract - renaming one breaks branch protection.
+# Produces four of the five required status checks named in
+# docs/50-deployment/rebuild/main-ruleset.json: `quality-gate` / `build` /
+# `test-coverage` / `audit` (the fifth, `gitleaks`, is in secret-scan.yml). Job
+# names are a stable contract - renaming one breaks branch protection. In the
+# governance-shell batch `build` and `test-coverage` are green placeholders (no
+# app, no tests yet); later batches replace them with real work while keeping
+# the context names stable.
 
 on:
   pull_request:
@@ -71,4 +73,51 @@ jobs:
           # osv-scanner does not auto-discover the repo-root config, so the
           # ignore baseline would silently not apply. A new advisory exits
           # non-zero and fails this required check.
-          /tmp/osv-bin/osv-scanner scan -L pnpm-lock.yaml --config .osv-scanner.toml
+          # --allow-no-lockfiles: the governance-shell batch has zero runtime
+          # dependencies, so the lockfile lists 0 packages; without this flag
+          # osv-scanner exits 128 ("no package sources"). Once batch 2 adds real
+          # dependencies the flag is a no-op and this becomes a real scan.
+          /tmp/osv-bin/osv-scanner scan -L pnpm-lock.yaml --config .osv-scanner.toml --allow-no-lockfiles
+
+  # -- Static checks (feed quality-gate) --------------------------------------
+  # Pure-node, zero-dependency checks that run without a pnpm install: the docs
+  # numbering hard gate and a whitespace/marker check. quality-gate aggregates
+  # this; later batches add type-check / lint / guardrails as they become real.
+  static-checks:
+    name: static-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Whitespace and conflict-marker check
+        run: git diff --check
+
+      - name: Docs numbering guardrail (strict)
+        run: node scripts/guardrails/check-docs-numbering.mjs --strict
+
+  # -- Quality gate (aggregator; stable required-check name) ------------------
+  quality-gate:
+    name: quality-gate
+    runs-on: ubuntu-latest
+    needs: [static-checks]
+    steps:
+      - name: Aggregate
+        run: echo "quality gate: all aggregated checks passed"
+
+  # -- Build (required check; placeholder in the skeleton) --------------------
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skeleton build
+        run: echo "skeleton: no app yet"
+
+  # -- Test coverage (required check; permanently-green no-op in the skeleton) -
+  test-coverage:
+    name: test-coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skeleton test-coverage
+        run: echo "skeleton: no tests yet"

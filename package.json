@@ -1,0 +1,15 @@
+{
+  "name": "vxture-template",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Governance-first template for a Vxture product repository.",
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "type-check:all": "echo \"skeleton: no packages to type-check yet\"",
+    "lint": "echo \"skeleton: no package lint configured yet\"",
+    "lint:docs-numbering": "node scripts/guardrails/check-docs-numbering.mjs --strict"
+  }
+}
