@@ -7,9 +7,15 @@
   "engines": {
     "node": ">=22"
   },
+  "pnpm": {
+    "overrides": {
+      "postcss@<8.5.10": ">=8.5.10"
+    }
+  },
   "scripts": {
-    "type-check:all": "echo \"skeleton: no packages to type-check yet\"",
-    "lint": "echo \"skeleton: no package lint configured yet\"",
+    "build": "pnpm --filter @product-code/app build",
+    "type-check:all": "pnpm --filter @product-code/shared type-check",
+    "lint": "pnpm --recursive --if-present lint",
     "lint:docs-numbering": "node scripts/guardrails/check-docs-numbering.mjs --strict"
   }
 }
