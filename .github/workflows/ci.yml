@@ -136,11 +136,25 @@ jobs:
         env:
           NEXT_PUBLIC_GIT_SHA: ${{ github.sha }}
 
-  # -- Test coverage (required check; permanently-green no-op in the skeleton) -
+  # -- Test coverage (required check): run the app unit tests (node:test + tsx).
   test-coverage:
     name: test-coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Skeleton test-coverage
-        run: |
-          echo "skeleton: no tests yet"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable corepack (pnpm from packageManager)
+        run: corepack enable
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm --filter @product-code/app test
