@@ -97,6 +97,9 @@ jobs:
       - name: Docs numbering guardrail (strict)
         run: node scripts/guardrails/check-docs-numbering.mjs --strict
 
+      - name: Data architecture guardrail (DDL <-> Prisma lockstep)
+        run: node scripts/guardrails/check-data-architecture.mjs --strict
+
   # -- Quality gate (aggregator; stable required-check name) ------------------
   quality-gate:
     name: quality-gate

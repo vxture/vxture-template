@@ -16,6 +16,7 @@
     "build": "pnpm --filter @product-code/app build",
     "type-check:all": "pnpm --filter @product-code/shared type-check",
     "lint": "pnpm --recursive --if-present lint",
-    "lint:docs-numbering": "node scripts/guardrails/check-docs-numbering.mjs --strict"
+    "lint:docs-numbering": "node scripts/guardrails/check-docs-numbering.mjs --strict",
+    "lint:data-design": "node scripts/guardrails/check-data-architecture.mjs --strict"
   }
 }
