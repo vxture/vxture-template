@@ -47,13 +47,12 @@ jobs:
       ACR_REGISTRY: ${{ vars.ALIYUN_ACR_REGISTRY }}
       ACR_NAMESPACE: ${{ vars.ALIYUN_ACR_NAMESPACE }}
       VXTURE_NPM_REGISTRY: ${{ vars.VXTURE_NPM_REGISTRY }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - image: __PRODUCT_CODE__-app
-            context: .
-            dockerfile: ./portals/app/Dockerfile
+      # Product code source: the PRODUCT_CODE repo variable (the template sets it
+      # to the demo code `vxtpl`), falling back to the __PRODUCT_CODE__ literal an
+      # instantiated product repo has already replaced with its real code.
+      IMAGE: ${{ vars.PRODUCT_CODE || '__PRODUCT_CODE__' }}-app
+      IMAGE_CONTEXT: .
+      IMAGE_DOCKERFILE: ./portals/app/Dockerfile
     steps:
       - name: Resolve build SHA
         id: sha
@@ -125,7 +124,6 @@ jobs:
         id: decide
         shell: bash
         env:
-          IMAGE: ${{ matrix.image }}
           IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
         run: |
           set -euo pipefail
@@ -144,8 +142,8 @@ jobs:
         if: ${{ steps.decide.outputs.build == 'true' }}
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile }}
+          context: ${{ env.IMAGE_CONTEXT }}
+          file: ${{ env.IMAGE_DOCKERFILE }}
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -158,16 +156,16 @@ jobs:
           secrets: |
             node_auth_token=${{ secrets.NODE_AUTH_TOKEN }}
           tags: |
-            ghcr.io/${{ env.GHCR_NAMESPACE }}/${{ matrix.image }}:${{ steps.meta.outputs.image_tag }}
-            ghcr.io/${{ env.GHCR_NAMESPACE }}/${{ matrix.image }}:${{ steps.meta.outputs.ref_tag }}
-            ${{ env.ACR_REGISTRY }}/${{ env.ACR_NAMESPACE }}/${{ matrix.image }}:${{ steps.meta.outputs.image_tag }}
-            ${{ env.ACR_REGISTRY }}/${{ env.ACR_NAMESPACE }}/${{ matrix.image }}:${{ steps.meta.outputs.ref_tag }}
+            ghcr.io/${{ env.GHCR_NAMESPACE }}/${{ env.IMAGE }}:${{ steps.meta.outputs.image_tag }}
+            ghcr.io/${{ env.GHCR_NAMESPACE }}/${{ env.IMAGE }}:${{ steps.meta.outputs.ref_tag }}
+            ${{ env.ACR_REGISTRY }}/${{ env.ACR_NAMESPACE }}/${{ env.IMAGE }}:${{ steps.meta.outputs.image_tag }}
+            ${{ env.ACR_REGISTRY }}/${{ env.ACR_NAMESPACE }}/${{ env.IMAGE }}:${{ steps.meta.outputs.ref_tag }}
 
       - name: Scan image (trivy, report-only)
         if: ${{ steps.decide.outputs.build == 'true' }}
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ghcr.io/${{ env.GHCR_NAMESPACE }}/${{ matrix.image }}:${{ steps.meta.outputs.image_tag }}
+          image-ref: ghcr.io/${{ env.GHCR_NAMESPACE }}/${{ env.IMAGE }}:${{ steps.meta.outputs.image_tag }}
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
@@ -184,7 +182,7 @@ jobs:
         if: ${{ steps.decide.outputs.build == 'false' }}
         shell: bash
         env:
-          IMAGE: ${{ matrix.image }}
+          IMAGE: ${{ env.IMAGE }}
           IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
           REF_TAG: ${{ steps.meta.outputs.ref_tag }}
         run: |

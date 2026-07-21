@@ -30,6 +30,11 @@ permissions:
   contents: read
   packages: write
 
+env:
+  # Product code source: PRODUCT_CODE repo variable (template=vxtpl), else the
+  # __PRODUCT_CODE__ literal an instantiated product repo already replaced.
+  PRODUCT_CODE: ${{ vars.PRODUCT_CODE || '__PRODUCT_CODE__' }}
+
 jobs:
   detect:
     name: detect-target-environment
@@ -125,7 +130,7 @@ jobs:
         run: |
           set -euo pipefail
           port="${DEPLOY_PORT:-22}"
-          stack_root="/srv/md0/__PRODUCT_CODE__"
+          stack_root="/srv/md0/${PRODUCT_CODE}"
           ssh_opts=(-i ~/.ssh/deploy_key -p "$port" -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o ConnectTimeout=30)
           if ssh "${ssh_opts[@]}" "$DEPLOY_USER@$DEPLOY_HOST" "test -f '$stack_root/etc/.env'"; then
             echo "[bootstrap] $stack_root/etc/.env exists - skipping"
@@ -154,7 +159,7 @@ jobs:
         run: |
           set -euo pipefail
           port="${DEPLOY_PORT:-22}"
-          deploy_dir="${DEPLOY_DIR:-/srv/md0/__PRODUCT_CODE__/deploy}"
+          deploy_dir="${DEPLOY_DIR:-/srv/md0/${PRODUCT_CODE}/deploy}"
           image_tag="$IMAGE_TAG"
           test -n "$image_tag"
           ssh_opts=(-i ~/.ssh/deploy_key -p "$port" -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o ConnectTimeout=30)
@@ -174,7 +179,7 @@ jobs:
 
           # Confirm the delivered compose carries the expected db service.
           ssh "${ssh_opts[@]}" "$DEPLOY_USER@$DEPLOY_HOST" \
-            "grep -q '__PRODUCT_CODE__-db' '$deploy_dir/docker-compose.yml' && echo '[deliver] compose has __PRODUCT_CODE__-db' || echo '[deliver] WARN: __PRODUCT_CODE__-db missing'"
+            "grep -q '${PRODUCT_CODE}-db' '$deploy_dir/docker-compose.yml' && echo '[deliver] compose has ${PRODUCT_CODE}-db' || echo '[deliver] WARN: ${PRODUCT_CODE}-db missing'"
           ssh "${ssh_opts[@]}" "$DEPLOY_USER@$DEPLOY_HOST" "printf '%s\n' '$PASSED_SHA' > '$deploy_dir/VERSION'"
 
           # Remote deploy script: GHCR primary (non-VPC host), ACR fallback.
@@ -200,7 +205,7 @@ jobs:
           scp -i ~/.ssh/deploy_key -P "$port" -o ConnectTimeout=30 /tmp/deploy.sh "$DEPLOY_USER@$DEPLOY_HOST:/tmp/deploy.sh"
 
           remote_env=(
-            "REPO_DIR=$deploy_dir" "IMAGE_TAG=$image_tag"
+            "PRODUCT_CODE=$PRODUCT_CODE" "REPO_DIR=$deploy_dir" "IMAGE_TAG=$image_tag"
             "ALIYUN_ACR_REGISTRY=$ALIYUN_ACR_REGISTRY" "ALIYUN_ACR_NAMESPACE=$ALIYUN_ACR_NAMESPACE"
             "ALIYUN_ACR_USERNAME=$ALIYUN_ACR_USERNAME" "ALIYUN_ACR_PASSWORD=$ALIYUN_ACR_PASSWORD"
             "GHCR_USERNAME=$GHCR_USERNAME" "GHCR_TOKEN=$GHCR_TOKEN"

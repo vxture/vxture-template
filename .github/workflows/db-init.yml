@@ -38,6 +38,11 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # Product code source: PRODUCT_CODE repo variable (template=vxtpl), else the
+  # __PRODUCT_CODE__ literal an instantiated product repo already replaced.
+  PRODUCT_CODE: ${{ vars.PRODUCT_CODE || '__PRODUCT_CODE__' }}
+
 jobs:
   db-init:
     name: db-init
@@ -103,30 +108,34 @@ jobs:
         run: |
           set -euo pipefail
           port="${DEPLOY_PORT:-22}"
-          deploy_dir="${DEPLOY_DIR:-/srv/md0/__PRODUCT_CODE__/deploy}"
+          deploy_dir="${DEPLOY_DIR:-/srv/md0/${PRODUCT_CODE}/deploy}"
+          snake="${PRODUCT_CODE//-/_}"
           ssh_opts=(-i ~/.ssh/deploy_key -p "$port" -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o ConnectTimeout=30)
 
           cat > /tmp/db-init.sh <<'REMOTE_SCRIPT'
           set -euo pipefail
           cd "$REPO_DIR"
-          DB="vxturebiz___PRODUCT_CODE_SNAKE___prod"
-          CONT="__PRODUCT_CODE__-db"
+          DB="vxturebiz_${SNAKE}_prod"
+          CONT="${PRODUCT_CODE}-db"
           run() { docker exec -i "$CONT" psql -U postgres -d "$DB" -v ON_ERROR_STOP=1 "$@"; }
+          # Substitute the snake placeholder in the role/lock DDL (a no-op for an
+          # instantiated product where it is already the real code).
+          apply_file() { sed "s/__PRODUCT_CODE_SNAKE__/${SNAKE}/g" "$1" | run; }
           if [ "$ACTION" = "verify" ]; then
             run -c "SELECT table_schema||'.'||table_name FROM information_schema.tables WHERE table_schema IN ('vx_provision','local_authz','local_usage') ORDER BY 1;"
             exit 0
           fi
           for f in database/ddl/00_baseline.sql database/ddl/97_service_role.sql database/ddl/98_column_locks.sql; do
             echo "[db-init] applying $f"
-            run < "$f"
+            apply_file "$f"
           done
           shopt -s nullglob
           for f in database/ddl/incr/*.sql; do
             echo "[db-init] applying incr $(basename "$f")"
-            run < "$f"
+            apply_file "$f"
           done
           echo "[db-init] done."
           REMOTE_SCRIPT
           scp -i ~/.ssh/deploy_key -P "$port" -o ConnectTimeout=30 /tmp/db-init.sh "$DEPLOY_USER@$DEPLOY_HOST:/tmp/db-init.sh"
-          printf '%s\n' "REPO_DIR=$(printf %q "$deploy_dir") ACTION=$(printf %q "$ACTION") bash /tmp/db-init.sh" \
+          printf '%s\n' "REPO_DIR=$(printf %q "$deploy_dir") ACTION=$(printf %q "$ACTION") PRODUCT_CODE=$(printf %q "$PRODUCT_CODE") SNAKE=$(printf %q "$snake") bash /tmp/db-init.sh" \
             | ssh "${ssh_opts[@]}" "$DEPLOY_USER@$DEPLOY_HOST" bash -s
