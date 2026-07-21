@@ -130,6 +130,10 @@ jobs:
 
       - name: Install (frozen lockfile)
         run: pnpm install --frozen-lockfile
+        env:
+          # @vxture/shared resolves from GitHub Packages (org secret, visibility
+          # "all" - every org repo's Actions can read it).
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
       - name: Type-check (shared)
         run: pnpm type-check:all
@@ -160,6 +164,10 @@ jobs:
 
       - name: Install (frozen lockfile)
         run: pnpm install --frozen-lockfile
+        env:
+          # @vxture/shared resolves from GitHub Packages (org secret, visibility
+          # "all" - every org repo's Actions can read it).
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
       - name: Run tests
         run: pnpm --filter @product-code/app test

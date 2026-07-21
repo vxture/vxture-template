@@ -1,5 +1,5 @@
 import { BRAND } from "@product-code/shared/brand";
-import { VERSION } from "@product-code/shared/version";
+import { serviceIdentity } from "@vxture/shared";
 
 // Integration-status surface (the /status dashboard + /api/status). Summarizes
 // ALL platform-integration config for at-a-glance inspection.
@@ -88,7 +88,7 @@ export function buildStatus(env: Env, now: string): IntegrationStatus {
   return {
     identity: {
       productCode: BRAND.productCode,
-      gitSha: VERSION.gitSha,
+      gitSha: serviceIdentity({ service: `${BRAND.productCode}-app`, product: BRAND.productCode }).gitSha,
       appEnv: env.NEXT_PUBLIC_APP_ENV ?? env.NODE_ENV ?? "unknown",
       time: now,
     },

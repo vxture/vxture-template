@@ -11,10 +11,9 @@ RUN corepack enable
 FROM base AS builder
 WORKDIR /repo
 COPY . .
-# The GitHub Packages token (for @vxture/*) rides a BuildKit secret, read via
-# .npmrc's ${NODE_AUTH_TOKEN} - never a build-arg, never baked into a layer. The
-# secret is optional: the scaffold has no @vxture/* dep yet, so a build without
-# it still resolves the public registry.
+# The GitHub Packages token (for @vxture/*, e.g. @vxture/shared - TD-001) rides
+# a BuildKit secret, read via .npmrc's ${NODE_AUTH_TOKEN} - never a build-arg,
+# never baked into a layer. Required: the app depends on @vxture/shared.
 ARG VXTURE_NPM_REGISTRY
 RUN --mount=type=secret,id=node_auth_token \
     --mount=type=cache,id=pnpm,target=/pnpm/store \

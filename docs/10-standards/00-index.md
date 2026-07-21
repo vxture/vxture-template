@@ -30,9 +30,10 @@ enforcement; this index is the pointer to the WHAT they enforce.
 
 Local realization of the standards above (where to look, not a re-statement):
 
-- **020 + 025 (health)**: `buildHealthIdentity()` in `portals/packages/shared`
-  (the single response shape), the liveness route `portals/app/app/api/health/`,
-  the four provenance `ARG->ENV` in `portals/app/Dockerfile` (runner stage), and
-  their build-time derivation from git tag/sha/date in
-  `.github/workflows/build.yml`. Any instantiated product inherits these
-  unchanged, so its `/api/health` conforms out of the box.
+- **020 + 025 (health)**: `buildHealthIdentity()` imported directly from the
+  published `@vxture/shared` (single response shape, no local
+  re-implementation - see docs/60-operations TD-001), called from the liveness
+  route `portals/app/app/api/health/`, fed by the four provenance `ARG->ENV` in
+  `portals/app/Dockerfile` (runner stage) and their build-time derivation from
+  git tag/sha/date in `.github/workflows/build.yml`. Any instantiated product
+  inherits these unchanged, so its `/api/health` conforms out of the box.

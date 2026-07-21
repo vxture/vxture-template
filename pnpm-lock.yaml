@@ -23,6 +23,9 @@ importers:
       '@product-code/shared':
         specifier: workspace:*
         version: link:../packages/shared
+      '@vxture/shared':
+        specifier: ^1.5.0
+        version: 1.5.0
       ioredis:
         specifier: ^5.4.0
         version: 5.11.1
@@ -631,6 +634,10 @@ packages:
 
   '@types/react@19.2.17':
     resolution: {integrity: sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==}
+
+  '@vxture/shared@1.5.0':
+    resolution: {integrity: sha512-CWvPB6Rua/QLvR9NODSpjJS+Absi7XeuV4+Zr6Uduqa2Xz61CGJ5ku/PRA0CV1jDcZtl20DvS45rnFPSPmZP9A==, tarball: https://npm.pkg.github.com/download/@vxture/shared/1.5.0/7b3aede526045dff4fc91e852343e579548ff420}
+    engines: {node: '>=22.0.0'}
 
   ajv@8.20.0:
     resolution: {integrity: sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==}
@@ -1480,6 +1487,8 @@ snapshots:
   '@types/react@19.2.17':
     dependencies:
       csstype: 3.2.3
+
+  '@vxture/shared@1.5.0': {}
 
   ajv@8.20.0:
     dependencies:
