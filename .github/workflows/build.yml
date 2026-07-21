@@ -85,6 +85,18 @@ jobs:
         with:
           ref: ${{ steps.sha.outputs.sha }}
 
+      # Build-time instantiation: bake the real product code into the image
+      # source (brand, package scope, DDL, OIDC client, ...) so the deployed app
+      # identifies as PRODUCT_CODE, not the __PRODUCT_CODE__ placeholder. Runs on
+      # the ephemeral CI checkout only; the repo stays a template. A no-op for an
+      # already-instantiated product repo (no placeholders left to replace).
+      - name: Instantiate for PRODUCT_CODE
+        if: ${{ vars.PRODUCT_CODE != '' }}
+        shell: bash
+        env:
+          PRODUCT_CODE: ${{ vars.PRODUCT_CODE }}
+        run: node scripts/init/instantiate.mjs "$PRODUCT_CODE"
+
       - name: Compute image metadata
         id: meta
         shell: bash
