@@ -109,6 +109,32 @@ jobs:
           echo "image_tag=sha-$short_sha" >> "$GITHUB_OUTPUT"
           echo "ref_tag=$REF_NAME" >> "$GITHUB_OUTPUT"
 
+      # Health provenance (025 section 4.2): derive the four build-injected values
+      # from git tag / sha / date, with honest fallbacks. gitSha is BARE (no
+      # `sha-` prefix - that prefix is the image-tag form, not the data).
+      - name: Compute health provenance
+        id: prov
+        shell: bash
+        env:
+          PASSED_SHA: ${{ steps.sha.outputs.sha }}
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+        run: |
+          set -euo pipefail
+          if [ "$REF_TYPE" = "tag" ]; then app_version="$REF_NAME"; else app_version="dev"; fi
+          case "$REF_TYPE:$REF_NAME" in
+            tag:v*)    stage="production" ;;
+            tag:beta-*) stage="beta" ;;
+            tag:dev-*) stage="dev" ;;
+            *)         stage="dev" ;;
+          esac
+          {
+            echo "app_version=$app_version"
+            echo "git_sha=${PASSED_SHA::8}"
+            echo "build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "deploy_stage=$stage"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
@@ -165,7 +191,10 @@ jobs:
           # build-arg would persist into the exported mode=max gha cache).
           build-args: |
             VXTURE_NPM_REGISTRY=${{ env.VXTURE_NPM_REGISTRY }}
-            NEXT_PUBLIC_GIT_SHA=${{ steps.meta.outputs.image_tag }}
+            APP_VERSION=${{ steps.prov.outputs.app_version }}
+            GIT_SHA=${{ steps.prov.outputs.git_sha }}
+            BUILD_TIME=${{ steps.prov.outputs.build_time }}
+            DEPLOY_STAGE=${{ steps.prov.outputs.deploy_stage }}
           secrets: |
             node_auth_token=${{ secrets.NODE_AUTH_TOKEN }}
           tags: |

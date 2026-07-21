@@ -12,8 +12,13 @@ services:
     build:
       context: .
       dockerfile: portals/app/Dockerfile
+      # Local `compose build` only; the deploy path pulls the CI-built image (which
+      # injects real provenance). Honest dev/unknown defaults for local builds.
       args:
-        NEXT_PUBLIC_GIT_SHA: ${IMAGE_TAG:-local}
+        APP_VERSION: ${APP_VERSION:-dev}
+        GIT_SHA: ${GIT_SHA:-unknown}
+        BUILD_TIME: ${BUILD_TIME:-unknown}
+        DEPLOY_STAGE: ${DEPLOY_STAGE:-dev}
     image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-vxture}/${PRODUCT_CODE:-__PRODUCT_CODE__}-app:${IMAGE_TAG:-local}
     # Load the full operator .env into the app so ALL runtime config (OIDC,
     # platform client, webhook, INTERNAL_JOB_TOKEN, STATUS_PAGE, ...) reaches it -

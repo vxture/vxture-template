@@ -137,7 +137,9 @@ jobs:
       - name: Build app (Next.js standalone)
         run: pnpm build
         env:
-          NEXT_PUBLIC_GIT_SHA: ${{ github.sha }}
+          # Provenance is read at runtime (server env), not baked by `next build`;
+          # set GIT_SHA so the CI build environment is representative.
+          GIT_SHA: ${{ github.sha }}
 
   # -- Test coverage (required check): run the app unit tests (node:test + tsx).
   test-coverage:
