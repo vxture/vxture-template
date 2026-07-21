@@ -15,6 +15,13 @@ services:
       args:
         NEXT_PUBLIC_GIT_SHA: ${IMAGE_TAG:-local}
     image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-vxture}/${PRODUCT_CODE:-__PRODUCT_CODE__}-app:${IMAGE_TAG:-local}
+    # Load the full operator .env into the app so ALL runtime config (OIDC,
+    # platform client, webhook, INTERNAL_JOB_TOKEN, STATUS_PAGE, ...) reaches it -
+    # not just the few keys in `environment:` below. APP_ENV_FILE is the absolute
+    # path deploy.sh passes (<root>/etc/.env); local dev falls back to ./.env.
+    env_file:
+      - path: ${APP_ENV_FILE:-.env}
+        required: false
     environment:
       NODE_ENV: production
       PORT: "3000"
