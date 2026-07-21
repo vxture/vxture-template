@@ -12,7 +12,8 @@ product repo.
 | Docs taxonomy | `docs/10-standards/070-docs-taxonomy.md` | docs numbering and identifiers |
 | Security | `docs/10-standards/150-security.md` | secret boundaries |
 | CI/CD optimization | `docs/10-standards/010-cicd-optimization-playbook.md` | CI speed-ups |
-| Container healthcheck | `docs/10-standards/020-container-healthcheck-standard.md` | container health |
+| Container healthcheck | `docs/10-standards/020-container-healthcheck-standard.md` | liveness probe mechanics: zero-dependency route, bind `0.0.0.0`, probe params |
+| Health endpoint contract | `docs/10-standards/025-service-health-endpoint-contract.md` | liveness response body: identity block + build-time provenance injection (companion to 020) |
 
 ## Template design and runbook (platform repo)
 
@@ -26,3 +27,12 @@ The governance base is realized here as concrete artifacts, not prose: the
 branch-protection ruleset (`docs/50-deployment/rebuild/main-ruleset.json`), the
 secret-scan / SCA / docs-numbering guardrails, and the CI workflows. Those are the
 enforcement; this index is the pointer to the WHAT they enforce.
+
+Local realization of the standards above (where to look, not a re-statement):
+
+- **020 + 025 (health)**: `buildHealthIdentity()` in `portals/packages/shared`
+  (the single response shape), the liveness route `portals/app/app/api/health/`,
+  the four provenance `ARG->ENV` in `portals/app/Dockerfile` (runner stage), and
+  their build-time derivation from git tag/sha/date in
+  `.github/workflows/build.yml`. Any instantiated product inherits these
+  unchanged, so its `/api/health` conforms out of the box.
