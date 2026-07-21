@@ -147,6 +147,10 @@ DATABASE_URL=postgresql://${snake}_svc:@${code}-db:5432/vxturebiz_${snake}_prod
 # --- Redis (RP session store) ---
 REDIS_URL=redis://${code}-redis:6379
 
+# --- Status dashboard (/status, /api/status) ---
+STATUS_PAGE=public                       # public | authed (login required) | off
+STATUS_SHOW_INFRA=on                     # on shows db host/name/role; off hides them
+
 # --- C1 OIDC RP (080-rp section 2.11) ---
 OIDC_ISSUER=https://accounts.vxture.com
 OIDC_CLIENT_ID=${code}                   # BETA OVERRIDES: ${code}-beta
