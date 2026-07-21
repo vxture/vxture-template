@@ -20,6 +20,10 @@ inputs:
     default: ''
   deploy-ssh-key:
     required: true
+  deploy-ssh-passphrase:
+    description: Passphrase for an encrypted deploy key (empty if the key is unencrypted)
+    required: false
+    default: ''
   deploy-known-hosts:
     required: false
     default: ''
@@ -48,6 +52,7 @@ runs:
         DEPLOY_HOST: ${{ inputs.deploy-host }}
         DEPLOY_PORT: ${{ inputs.deploy-port }}
         DEPLOY_SSH_KEY: ${{ inputs.deploy-ssh-key }}
+        DEPLOY_SSH_PASSPHRASE: ${{ inputs.deploy-ssh-passphrase }}
         DEPLOY_KNOWN_HOSTS: ${{ inputs.deploy-known-hosts }}
       run: |
         set -euo pipefail
@@ -55,6 +60,14 @@ runs:
         chmod 700 ~/.ssh
         printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
+
+        # If the key is passphrase-encrypted, strip the passphrase in place so
+        # `ssh -i deploy_key` works non-interactively (CI has no tty). The
+        # decrypted key exists only on the ephemeral runner (~/.ssh, wiped with
+        # the job); it never leaves the runner.
+        if [ -n "${DEPLOY_SSH_PASSPHRASE:-}" ]; then
+          ssh-keygen -p -P "$DEPLOY_SSH_PASSPHRASE" -N "" -f ~/.ssh/deploy_key >/dev/null
+        fi
 
         if [ -n "${DEPLOY_KNOWN_HOSTS:-}" ]; then
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
