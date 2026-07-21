@@ -173,7 +173,7 @@ jobs:
           cp -a deploy/. "$stage/"
           [ -d configs ] && cp -a configs "$stage/configs" || true
           cp -a docker-compose.yml "$stage/docker-compose.yml"
-          rsync -az --delete --exclude='VERSION' \
+          rsync -az --delete --exclude='VERSION' --exclude='data' \
             -e "ssh -i ~/.ssh/deploy_key -p $port -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o ConnectTimeout=30" \
             "$stage/" "$DEPLOY_USER@$DEPLOY_HOST:$deploy_dir/"
           rm -rf "$stage"

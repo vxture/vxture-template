@@ -24,6 +24,10 @@ PRODUCT_CODE_SNAKE="${PRODUCT_CODE//-/_}"
 IMAGE_NAME="${PRODUCT_CODE}-app"
 PROJECT_NAME="${PRODUCT_CODE}"
 APP_PORT="3000"
+# Persistent data lives OUTSIDE the deploy dir (which is rsync --delete'd on every
+# deploy) - container-written data is root-owned and would otherwise break the
+# next deploy's rsync. Absolute path under the stack root.
+DATA_DIR="${DATA_DIR:-$ROOT/data}"
 
 log() { echo "[deploy] $*"; }
 
@@ -31,6 +35,7 @@ compose() {
   PRODUCT_CODE="$PRODUCT_CODE" \
   PRODUCT_CODE_SNAKE="$PRODUCT_CODE_SNAKE" \
   PROJECT_NAME="$PROJECT_NAME" \
+  DATA_DIR="$DATA_DIR" \
   IMAGE_REGISTRY="${IMAGE_REGISTRY:-ghcr.io}" \
   IMAGE_NAMESPACE="${IMAGE_NAMESPACE:-vxture}" \
   IMAGE_TAG="${IMAGE_TAG:-latest}" \
@@ -44,8 +49,8 @@ cmd_environment() {
 }
 
 cmd_directories() {
-  mkdir -p "$ROOT/data/redis" "$ROOT/data/db"
-  log "directories ready"
+  mkdir -p "$DATA_DIR/redis" "$DATA_DIR/db"
+  log "directories ready ($DATA_DIR)"
 }
 
 cmd_start() {
