@@ -31,7 +31,7 @@ Offline Mock-green. Each sub-batch was one PR (squash-merged).
 | 2d | C3 - provisioning webhook (HMAC/idempotency/seq) + usage buffer/flush (409-terminal); persistence port + in-memory | done (#5) |
 | 2e | Business-face DB baseline - DDL three-part (vx_provision/local_authz/local_usage) + service role + column locks + Prisma lockstep guardrail | done (#6) |
 | 2f | Offline verification pages - tier x status gating matrix + channel-status probe | done (#7) |
-| 2g | `.env.example` completed with the platform-integration keys; batch-2 finalize | in progress |
+| 2g | `.env.example` completed with the platform-integration keys; batch-2 finalize | done (#8) |
 
 Deferred to later batches: the Prisma-backed runtime stores (need a live DB ->
 batch 3), the `@vxture/shared` value-domain dependency (needs CI `NODE_AUTH_TOKEN`
@@ -44,4 +44,4 @@ pending), and the deploy pipeline (batch E).
 |-------|-------|
 | 3 | Online integration testing against real platform endpoints; agent-profile increment per its three pre-decisions |
 | 4 | First real product instantiation, full end-to-end |
-| E | Deploy pipeline - **authored** (prod-only on worker02, `/srv/md0/<code>`, GHCR primary + ACR fallback): `deploy`/`build`/`rollback`/`db-init` workflows + `tailnet-ssh-connect` + `deploy.sh`; `production` Environment + required reviewer created. Infra-verify (real tag deploy) pending owner-transported `DEPLOY_*` secrets + worker02 stack bootstrap. |
+| E | Deploy pipeline - **authored and infra-verified**: `deploy`/`build`/`db-init` workflows + `tailnet-ssh-connect` + `deploy.sh` exercised end-to-end against the `vxtpl` demo instantiation on worker02 (`/srv/md0/vxtpl`), GHCR primary + ACR fallback. Four real production tag deploys (v0.1.0-v0.1.3) plus a gated `db-init apply` all succeeded; `vxtpl.vxture.com` serves the live app with the business-face DB connected. `rollback.yml` remains unexercised (no rollback has been needed). |
