@@ -46,8 +46,12 @@ services:
     container_name: ${PROJECT_NAME:-__PRODUCT_CODE__}-db
     image: postgres:16-alpine
     environment:
+      # The container superuser is the DB OWNER, NOT the service role. The DDL
+      # (db-init, as this owner) creates the least-privilege <code>_svc role that
+      # the app connects as via DATABASE_URL (product_240 section 2.7: connect
+      # identity = <code>_svc, never owner-direct).
       POSTGRES_DB: ${POSTGRES_DB:-vxturebiz_${PRODUCT_CODE_SNAKE:-__PRODUCT_CODE_SNAKE__}_prod}
-      POSTGRES_USER: ${POSTGRES_USER:-${PRODUCT_CODE_SNAKE:-__PRODUCT_CODE_SNAKE__}_svc}
+      POSTGRES_USER: ${POSTGRES_DB_OWNER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
     volumes:
       - ${DATA_DIR:-./data}/db:/var/lib/postgresql/data
