@@ -10,7 +10,10 @@ name: db-init
 #
 # `apply` runs the three-part baseline + incr/ increments (idempotent create-once
 # + ADD COLUMN IF NOT EXISTS) against the production db container as the DB
-# superuser (docker exec, in-container trust).
+# superuser (docker exec, in-container trust), then sets the <snake>_svc role's
+# password from the operator .env's DATABASE_URL so the app can authenticate
+# (generating + patching one in place if the URL has none yet). `verify` reports
+# schema tables + whether the role has a password, non-destructively.
 on:
   workflow_dispatch:
     inputs:
@@ -118,14 +121,34 @@ jobs:
           cd "$REPO_DIR"
           DB="vxturebiz_${SNAKE}_prod"
           CONT="${PRODUCT_CODE}-db"
+          ENV_FILE="$(cd "$REPO_DIR/.." && pwd)/etc/.env"
           run() { docker exec -i "$CONT" psql -U postgres -d "$DB" -v ON_ERROR_STOP=1 "$@"; }
           # Substitute the snake placeholder in the role/lock DDL (a no-op for an
           # instantiated product where it is already the real code).
           apply_file() { sed "s/__PRODUCT_CODE_SNAKE__/${SNAKE}/g" "$1" | run; }
+
+          # Service-role password. The role is created LOGIN-only (no password) by
+          # 97_service_role.sql; the app connects as <snake>_svc over TCP (scram),
+          # so the role needs a password matching the operator .env's DATABASE_URL
+          # (postgresql://<svc>:PASSWORD@host...). Parse it here - it lives only on
+          # the host and never transits CI. Empty if the URL carries no password.
+          svc_pw=""
+          if [ -f "$ENV_FILE" ]; then
+            db_url="$(grep -E '^DATABASE_URL=' "$ENV_FILE" | head -1 | sed 's/^DATABASE_URL=//')"
+            db_url="${db_url%\"}"; db_url="${db_url#\"}"
+            creds="${db_url#*://}"; creds="${creds%%@*}"
+            case "$creds" in *:*) svc_pw="${creds#*:}" ;; esac
+          fi
+
           if [ "$ACTION" = "verify" ]; then
+            echo "[db-init] contract schema tables:"
             run -c "SELECT table_schema||'.'||table_name FROM information_schema.tables WHERE table_schema IN ('vx_provision','local_authz','local_usage') ORDER BY 1;"
+            echo "[db-init] service role state:"
+            run -c "SELECT rolname, rolcanlogin, (rolpassword IS NOT NULL) AS has_password FROM pg_roles WHERE rolname = '${SNAKE}_svc';"
+            if [ -n "$svc_pw" ]; then echo "[db-init] .env DATABASE_URL carries a svc password: yes"; else echo "[db-init] .env DATABASE_URL carries a svc password: no"; fi
             exit 0
           fi
+
           for f in database/ddl/00_baseline.sql database/ddl/97_service_role.sql database/ddl/98_column_locks.sql; do
             echo "[db-init] applying $f"
             apply_file "$f"
@@ -135,6 +158,26 @@ jobs:
             echo "[db-init] applying incr $(basename "$f")"
             apply_file "$f"
           done
+
+          # Give the service role its password so the app can authenticate. Source
+          # of truth is the operator .env's DATABASE_URL. If it has none yet,
+          # generate one, patch DATABASE_URL in place (600 file, host-only), and
+          # bounce the app so it reconnects with the new URL - keeping runtime and
+          # DB in agreement without a full .env re-bootstrap.
+          if [ -z "$svc_pw" ]; then
+            svc_pw="$(openssl rand -hex 24 2>/dev/null || head -c 18 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+            if [ ! -f "$ENV_FILE" ]; then
+              echo "[db-init] ERROR: $ENV_FILE not found; cannot persist svc password" >&2
+              exit 1
+            fi
+            sed -i -E "s#(^DATABASE_URL=\"?postgresql://${SNAKE}_svc:)[^@]*@#\1${svc_pw}@#" "$ENV_FILE"
+            echo "[db-init] no svc password in .env; generated one and patched DATABASE_URL"
+            docker restart "${PRODUCT_CODE}-app" >/dev/null 2>&1 || true
+          fi
+          # Pipe the ALTER over stdin (never argv) so the password stays out of ps.
+          esc="$(printf '%s' "$svc_pw" | sed "s/'/''/g")"
+          printf "ALTER ROLE %s_svc PASSWORD '%s';\n" "$SNAKE" "$esc" | run
+          echo "[db-init] service-role password set"
           echo "[db-init] done."
           REMOTE_SCRIPT
           scp -i ~/.ssh/deploy_key -P "$port" -o ConnectTimeout=30 /tmp/db-init.sh "$DEPLOY_USER@$DEPLOY_HOST:/tmp/db-init.sh"
