@@ -67,7 +67,7 @@ cmd_start() {
 cmd_verify() {
   local tries=0
   until [ "$tries" -ge 20 ]; do
-    if docker exec "${PROJECT_NAME}-app" wget -qO- "http://localhost:${APP_PORT}/api/health" >/dev/null 2>&1; then
+    if docker exec "${PROJECT_NAME}-app" wget -qO- "http://127.0.0.1:${APP_PORT}/api/health" >/dev/null 2>&1; then
       log "verify OK (health 200)"
       return 0
     fi
