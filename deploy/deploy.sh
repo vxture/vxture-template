@@ -17,13 +17,19 @@ ROOT="$(cd "$DEPLOY_DIR/.." && pwd)"     # /srv/md0/__PRODUCT_CODE__
 ENV_FILE="$ROOT/etc/.env"
 COMPOSE_FILE="$DEPLOY_DIR/docker-compose.yml"
 
-IMAGE_NAME="__PRODUCT_CODE__-app"
-PROJECT_NAME="__PRODUCT_CODE__"
+# Product code: from the environment (CI passes PRODUCT_CODE), else the
+# __PRODUCT_CODE__ literal an instantiated product repo already replaced.
+PRODUCT_CODE="${PRODUCT_CODE:-__PRODUCT_CODE__}"
+PRODUCT_CODE_SNAKE="${PRODUCT_CODE//-/_}"
+IMAGE_NAME="${PRODUCT_CODE}-app"
+PROJECT_NAME="${PRODUCT_CODE}"
 APP_PORT="3000"
 
 log() { echo "[deploy] $*"; }
 
 compose() {
+  PRODUCT_CODE="$PRODUCT_CODE" \
+  PRODUCT_CODE_SNAKE="$PRODUCT_CODE_SNAKE" \
   PROJECT_NAME="$PROJECT_NAME" \
   IMAGE_REGISTRY="${IMAGE_REGISTRY:-ghcr.io}" \
   IMAGE_NAMESPACE="${IMAGE_NAMESPACE:-vxture}" \

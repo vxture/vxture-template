@@ -34,28 +34,41 @@ batch E.
 This template deploys **production only** (owner decision) on **worker02** (in
 the tailnet, non-VPC -> GHCR primary + ACR fallback), stack root
 `/srv/md0/<code>` (data array). The workflows (`deploy`/`build`/`rollback`/
-`db-init` + the `tailnet-ssh-connect` action) are already in the repo.
+`db-init` + the `tailnet-ssh-connect` action) are in the repo. The deploy layer
+reads the product code from the `PRODUCT_CODE` repo variable (falling back to the
+`__PRODUCT_CODE__` literal an instantiated product repo has replaced), so the
+template deploys as its demo code without in-place instantiation.
 
-- [x] `production` GitHub Environment created with a Required reviewer (the
-      deploy job pauses until approved). No `beta` environment (prod only).
-- [ ] Record the **production** Environment secrets (values owner-transported):
-      - `DEPLOY_HOST` = worker02 tailnet name/IP, `DEPLOY_USER`, `DEPLOY_PORT`
-      - `DEPLOY_SSH_KEY` (+ optional `DEPLOY_KEY_PASSPHRASE`)
-      - `DEPLOY_KNOWN_HOSTS` (required; `ssh-keyscan -p <port> worker02` from a
-        trusted network - fail-closed, no TOFU)
-      - `DEPLOY_DIR` (optional; defaults to `/srv/md0/<code>/deploy`)
-      - `ENV_FILE_BASE64` (base64 of the instantiated `.env` for
-        `/srv/md0/<code>/etc/.env` bootstrap-if-missing)
-- [ ] Org-level shared credentials are already available to the repo (verified):
-      `NODE_AUTH_TOKEN`, `ALIYUN_ACR_USERNAME/PASSWORD`, `TAILSCALE_OAUTH_*`; org
-      vars `ALIYUN_ACR_REGISTRY/NAMESPACE`, `VXTURE_NPM_REGISTRY`,
+### Demo product allocation (vxtpl) - configured
+
+- [x] `PRODUCT_CODE` repo variable = `vxtpl`; `APP_PUBLISH_PORT` = `3232`
+      (avoids arda's 3230/3231).
+- [x] `production` GitHub Environment + Required reviewer (deploy pauses until
+      approved). No `beta` (prod only).
+- [x] Non-secret host secrets set from the arda repo's worker02 info:
+      `DEPLOY_HOST` = `vx-worker-02` (tailnet MagicDNS; IP `100.76.219.48`),
+      `DEPLOY_USER` = `stone`, `DEPLOY_PORT` = `22`.
+- [x] Domain `vxtpl.vxture.com` created and resolving (shared edge ->
+      `vx-worker-02:3232`).
+- [x] Org-level shared credentials available to the repo: `NODE_AUTH_TOKEN`,
+      `ALIYUN_ACR_USERNAME/PASSWORD`, `TAILSCALE_OAUTH_*`; org vars
+      `ALIYUN_ACR_REGISTRY/NAMESPACE`, `VXTURE_NPM_REGISTRY`,
       `TAILSCALE_OAUTH_CLIENT_TAG`.
-- [ ] Register infra allocation for `<code>` (product_240 section 2.7 gap
-      #6.10): `APP_PUBLISH_PORT`, host=worker02, stack_root=`/srv/md0/<code>`,
-      apex domain, ACR namespace.
-- [ ] Before the first deploy, SSH worker02 and verify `/srv/md0/<code>` exists,
-      `etc/.env` is in place (or let bootstrap create it), and the ACR/GHCR
-      logins work.
+
+### Still required from the owner (secret values the agent cannot obtain)
+
+- [ ] `DEPLOY_SSH_KEY` - a private key authorized on `vx-worker-02` for `stone`
+      (+ optional `DEPLOY_KEY_PASSPHRASE`).
+- [ ] `DEPLOY_KNOWN_HOSTS` - `ssh-keyscan -p 22 vx-worker-02` from a trusted
+      network (fail-closed; no TOFU).
+- [ ] `ENV_FILE_BASE64` - base64 of the vxtpl `.env` (domain `vxtpl.vxture.com`,
+      DB `vxturebiz_vxtpl_prod` / role `vxtpl_svc`, plus the OIDC/webhook/job
+      secrets). Generate the skeleton with
+      `node scripts/init/instantiate.mjs vxtpl --dry-run`.
+- [ ] SSH `vx-worker-02` once: create `/srv/md0/vxtpl`, confirm GHCR/ACR login.
+- [ ] Release: `git tag vX.Y.Z && git push origin vX.Y.Z` -> approve the pending
+      `production` deployment. DB structure via `db-init.yml` (`confirm=yes` +
+      `expected_sha`), never the deploy chain.
 - [ ] Release: `git tag vX.Y.Z && git push origin vX.Y.Z` -> approve the pending
       `production` deployment. DB structure changes go through `db-init.yml`
       (`confirm=yes` + `expected_sha`), never the deploy chain.
