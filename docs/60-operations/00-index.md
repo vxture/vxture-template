@@ -11,6 +11,7 @@ Append-only. Each entry is a known, deliberately-deferred debt with a stable ID
 | ID | Title | Opened | Status |
 |----|-------|--------|--------|
 | TD-001 | Wire the published `@vxture/shared` value-domain dependency + alignment guardrail | 2026-07-21 | closed 2026-07-21 |
+| TD-002 | Vendored health-identity implementation deviated from 025's shared-helper clause (undeclared) | 2026-07-21 | closed 2026-07-21 |
 
 ### TD-001 - `@vxture/shared` value-domain dependency
 
@@ -57,3 +58,35 @@ harmless while no `@vxture/*` dependency existed, required now that a real one
 does). CI already had `NODE_AUTH_TOKEN` as an org-level secret; the only new
 piece this closure needed was refreshing local-dev `gh auth` with the
 `read:packages` scope so the lockfile could be updated in the first place.
+
+### TD-002 - vendored health-identity implementation (undeclared deviation)
+
+**Retroactive registration**, filed per the platform's 2026-07-21 deviation
+discipline (`140-repo-governance-standard.md` execution-model section):
+standard clauses that cannot yet be met because an upstream dependency is not
+ready must be (1) annotated at the implementation site, (2) registered here by
+name (clause / reason / recovery condition), and (3) reported to the platform
+line - silent deviation fails self-rectify acceptance.
+
+- **Clause deviated from**: `docs/10-standards/025-service-health-endpoint-
+  contract.md` section 5/6 - "single shared helper, no service hand-rolls its
+  own response shape."
+- **Reason**: earlier the same day, the template built its own
+  `buildHealthIdentity()` in `portals/packages/shared/src/health.ts` (mirroring
+  025's documented shape) because `@vxture/shared` did not yet publish a real
+  implementation - the dependency did not exist to import. This was a
+  reasonable stopgap but was never declared as a deviation (no TD entry, no
+  report to the platform line) - exactly the undeclared-deviation failure mode
+  the platform's new discipline exists to close. The platform caught it via an
+  unrelated arda cross-check and issued
+  `docs/20-specs/220-vxtpl/10-vxtpl_301_shared-150-health-import-2607212159.md`
+  (`vxtpl_301`).
+- **Recovery condition**: `@vxture/shared` publishes `buildHealthIdentity()` /
+  `serviceIdentity()`.
+- **Closed 2026-07-21**: condition met at `@vxture/shared@1.5.0` (same release
+  that resolved TD-001). The vendored `health.ts`/`version.ts` were deleted in
+  the same change (see TD-001 above); the liveness route and status/page
+  consumers now import `@vxture/shared` directly. No live implementation site
+  remains to annotate (the vendor file no longer exists) - this entry plus the
+  reply liaison letter (`docs/80-liaison/`) are the closure record `vxtpl_301`
+  §3.4 asked for.
