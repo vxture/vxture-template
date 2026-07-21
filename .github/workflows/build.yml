@@ -165,6 +165,7 @@ jobs:
           # build-arg would persist into the exported mode=max gha cache).
           build-args: |
             VXTURE_NPM_REGISTRY=${{ env.VXTURE_NPM_REGISTRY }}
+            NEXT_PUBLIC_GIT_SHA=${{ steps.meta.outputs.image_tag }}
           secrets: |
             node_auth_token=${{ secrets.NODE_AUTH_TOKEN }}
           tags: |
