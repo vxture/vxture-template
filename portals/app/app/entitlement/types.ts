@@ -2,25 +2,15 @@
 // product_200 section 3). Read-only consumption: the product renders commercial
 // facts and never re-derives commercial decisions.
 //
-// VALUE-DOMAIN AUTHORITY = @vxture/shared (product_220 section 3). These local
-// constants are a temporary baseline until the published dependency is wired
-// (see docs/60-operations TD-001); keep them equal to @vxture/shared.
+// VALUE-DOMAIN AUTHORITY = @vxture/shared (product_220 section 3, catalog-domains
+// constants). Imported directly, not copied - TD-001 resolved 2026-07-21 (see
+// docs/60-operations). Re-exported here so existing local consumers
+// (capability.ts, entitlement-matrix/page.tsx) keep importing from "./types".
 
-export const TIERS = ["free", "starter", "pro", "business", "enterprise"] as const;
-export type Tier = (typeof TIERS)[number];
+import type { Tier, SubscriptionStatus } from "@vxture/shared";
 
-// Six real subscription states. `overdue` = dunning grace (entitlement retained).
-// Representative-status precedence (platform-side): active > trialing > overdue >
-// suspended > expired > cancelled. "Never subscribed" is null, NOT a status value.
-export const SUBSCRIPTION_STATUSES = [
-  "active",
-  "trialing",
-  "overdue",
-  "suspended",
-  "expired",
-  "cancelled",
-] as const;
-export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
+export { TIERS, SUBSCRIPTION_STATUSES } from "@vxture/shared";
+export type { Tier, SubscriptionStatus } from "@vxture/shared";
 
 export interface QuotaPool {
   metric: string; // must hit a platform metric registry key; product never defines

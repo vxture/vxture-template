@@ -4,9 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./brand": "./src/brand.ts",
-    "./version": "./src/version.ts",
-    "./health": "./src/health.ts"
+    "./brand": "./src/brand.ts"
   },
   "peerDependencies": {
     "next": "^15.0.0",
