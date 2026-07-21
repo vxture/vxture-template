@@ -11,11 +11,14 @@ RUN corepack enable
 FROM base AS builder
 WORKDIR /repo
 COPY . .
-# When a @vxture/* runtime dependency is introduced (later batch), the GitHub
-# Packages token is passed as a BuildKit secret and read via .npmrc - never a
-# build-arg, never baked into a layer. The scaffold has no @vxture/* dep yet, so
-# the plain install (public registry only) suffices.
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+# The GitHub Packages token (for @vxture/*) rides a BuildKit secret, read via
+# .npmrc's ${NODE_AUTH_TOKEN} - never a build-arg, never baked into a layer. The
+# secret is optional: the scaffold has no @vxture/* dep yet, so a build without
+# it still resolves the public registry.
+ARG VXTURE_NPM_REGISTRY
+RUN --mount=type=secret,id=node_auth_token \
+    --mount=type=cache,id=pnpm,target=/pnpm/store \
+    NODE_AUTH_TOKEN="$(cat /run/secrets/node_auth_token 2>/dev/null || true)" \
     pnpm install --frozen-lockfile
 ARG NEXT_PUBLIC_GIT_SHA=unknown
 ENV NEXT_PUBLIC_GIT_SHA=$NEXT_PUBLIC_GIT_SHA
