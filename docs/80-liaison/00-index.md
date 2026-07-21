@@ -8,3 +8,4 @@ guardrail still passes).
 | File | Stamp | To | Subject | Status |
 |------|-------|----|---------|--------|
 | `10-2607211400-vxtpl-edge-vhost-request.md` | 2607211400 | platform line | install `vxtpl.vxture.com` edge vhost -> `vx-worker-02:3232` | open |
+| `20-2607211320-vxtpl-platform-credential-request.md` | 2607211320 | platform line | issue C1 OIDC client secret + C2 platform API/S2S token + C3 webhook signing secret so vxtpl login/subscription/provisioning go live | open |
