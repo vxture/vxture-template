@@ -29,18 +29,33 @@ section 1 / section 6 and `product_240_repo-template.md` section 2.8.
 Batch 1 does NOT need deploy Environments or `DEPLOY_*` secrets - those are
 batch E.
 
-## Batch E (deployment) - later, not now
+## Batch E (deployment) - PROD ONLY on worker02
 
-- [ ] Create GitHub Environments: `beta` (no reviewer gate) and `production`
-      (Required reviewers configured - a `v*.*.*` tag deploy pauses until
-      approved).
-- [ ] Record per-Environment secrets/vars: `DEPLOY_HOST` / `DEPLOY_USER` /
-      `DEPLOY_PORT` / `DEPLOY_SSH_KEY` (+ optional `_PASSPHRASE`) /
-      `DEPLOY_KNOWN_HOSTS` (required) / `DEPLOY_DIR` / `ENV_FILE_BASE64` /
-      `<CODE>_DB_SVC_PASSWORD`.
-- [ ] Collect `DEPLOY_KNOWN_HOSTS` from a trusted network:
-      `ssh-keyscan -p <port> <host>`.
-- [ ] Confirm org-level shared credentials (ACR / tailscale / npm token) are
-      shared to this repo (configured once at the org, not duplicated).
-- [ ] Before the first deploy, SSH the target host and verify the stack root,
-      `.env`, and ACR login are in place.
+This template deploys **production only** (owner decision) on **worker02** (in
+the tailnet, non-VPC -> GHCR primary + ACR fallback), stack root
+`/srv/md0/<code>` (data array). The workflows (`deploy`/`build`/`rollback`/
+`db-init` + the `tailnet-ssh-connect` action) are already in the repo.
+
+- [x] `production` GitHub Environment created with a Required reviewer (the
+      deploy job pauses until approved). No `beta` environment (prod only).
+- [ ] Record the **production** Environment secrets (values owner-transported):
+      - `DEPLOY_HOST` = worker02 tailnet name/IP, `DEPLOY_USER`, `DEPLOY_PORT`
+      - `DEPLOY_SSH_KEY` (+ optional `DEPLOY_KEY_PASSPHRASE`)
+      - `DEPLOY_KNOWN_HOSTS` (required; `ssh-keyscan -p <port> worker02` from a
+        trusted network - fail-closed, no TOFU)
+      - `DEPLOY_DIR` (optional; defaults to `/srv/md0/<code>/deploy`)
+      - `ENV_FILE_BASE64` (base64 of the instantiated `.env` for
+        `/srv/md0/<code>/etc/.env` bootstrap-if-missing)
+- [ ] Org-level shared credentials are already available to the repo (verified):
+      `NODE_AUTH_TOKEN`, `ALIYUN_ACR_USERNAME/PASSWORD`, `TAILSCALE_OAUTH_*`; org
+      vars `ALIYUN_ACR_REGISTRY/NAMESPACE`, `VXTURE_NPM_REGISTRY`,
+      `TAILSCALE_OAUTH_CLIENT_TAG`.
+- [ ] Register infra allocation for `<code>` (product_240 section 2.7 gap
+      #6.10): `APP_PUBLISH_PORT`, host=worker02, stack_root=`/srv/md0/<code>`,
+      apex domain, ACR namespace.
+- [ ] Before the first deploy, SSH worker02 and verify `/srv/md0/<code>` exists,
+      `etc/.env` is in place (or let bootstrap create it), and the ACR/GHCR
+      logins work.
+- [ ] Release: `git tag vX.Y.Z && git push origin vX.Y.Z` -> approve the pending
+      `production` deployment. DB structure changes go through `db-init.yml`
+      (`confirm=yes` + `expected_sha`), never the deploy chain.

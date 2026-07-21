@@ -44,4 +44,4 @@ pending), and the deploy pipeline (batch E).
 |-------|-------|
 | 3 | Online integration testing against real platform endpoints; agent-profile increment per its three pre-decisions |
 | 4 | First real product instantiation, full end-to-end |
-| E | Deploy pipeline (tag->env CD, workflows, tailnet-ssh-connect) |
+| E | Deploy pipeline - **authored** (prod-only on worker02, `/srv/md0/<code>`, GHCR primary + ACR fallback): `deploy`/`build`/`rollback`/`db-init` workflows + `tailnet-ssh-connect` + `deploy.sh`; `production` Environment + required reviewer created. Infra-verify (real tag deploy) pending owner-transported `DEPLOY_*` secrets + worker02 stack bootstrap. |

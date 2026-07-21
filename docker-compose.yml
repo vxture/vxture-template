@@ -14,7 +14,7 @@ services:
       dockerfile: portals/app/Dockerfile
       args:
         NEXT_PUBLIC_GIT_SHA: ${IMAGE_TAG:-local}
-    image: __PRODUCT_CODE__-app:${IMAGE_TAG:-local}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-vxture}/__PRODUCT_CODE__-app:${IMAGE_TAG:-local}
     environment:
       NODE_ENV: production
       PORT: "3000"
