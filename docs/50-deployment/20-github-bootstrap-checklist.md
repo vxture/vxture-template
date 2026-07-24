@@ -41,15 +41,16 @@ template deploys as its demo code without in-place instantiation.
 
 ### Demo product allocation (vxtpl) - configured
 
-- [x] `PRODUCT_CODE` repo variable = `vxtpl`; `APP_PUBLISH_PORT` = `3232`
-      (avoids arda's 3230/3231).
+- [x] `PRODUCT_CODE` repo variable = `vxtpl`; `APP_PUBLISH_PORT` = `3210`
+      (reassigned from `3232` 2026-07-24; see
+      `docs/80-liaison/40-2607241900-vxtpl-port-reassignment.md`).
 - [x] `production` GitHub Environment + Required reviewer (deploy pauses until
       approved). No `beta` (prod only).
 - [x] Non-secret host secrets set from the arda repo's worker02 info:
       `DEPLOY_HOST` = `vx-worker-02` (tailnet MagicDNS; IP `100.76.219.48`),
       `DEPLOY_USER` = `stone`, `DEPLOY_PORT` = `22`.
 - [x] Domain `vxtpl.vxture.com` created and resolving (shared edge ->
-      `vx-worker-02:3232`).
+      `vx-worker-02:3210`).
 - [x] Org-level shared credentials available to the repo: `NODE_AUTH_TOKEN`,
       `ALIYUN_ACR_USERNAME/PASSWORD`, `TAILSCALE_OAUTH_*`; org vars
       `ALIYUN_ACR_REGISTRY/NAMESPACE`, `VXTURE_NPM_REGISTRY`,
